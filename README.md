@@ -15,7 +15,7 @@ $ sudo apt-get install qemu-system-x86
 $ ./scripts/build.sh
 ```
 
-* Launch a guest OS. This script pauses the OS launch and waits for remote debug via gdb. Press the key combination `ctrl+a x` to shutdown the guest OS. 
+* Launch a guest OS. This script pauses the OS launch and waits for remote debug via gdb. (Note: If you want to shutdown the guest OS, please press the key combination `ctrl+a x`).
 ```shell
 $ ./scripts/launch-vm.sh
 ```
