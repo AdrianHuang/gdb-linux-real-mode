@@ -2,8 +2,7 @@
 Debug the real-mode setup code of Linux Kernel.
 
 ## Note
-* Environment
-Tested on Ubuntu 20.04.1
+* Environment: Tested on Ubuntu 20.04.1
 
 * Required package
 ```shell
@@ -21,8 +20,8 @@ $ ./scripts/build.sh
 $ ./scripts/launch-vm.sh
 ```
 
-* Open another terminal and execute the script `real-mode-gdb$`. This sets a breakpoint at the label `start_of_setup (arch/x86/boot/header.S)` and run the guest OS. The code will be paused at the starting address of start_of_setup. You can use gdb commands to debug the real-mode setup code of Linux kernel. Enjoy debugging.
-```shell
+* Open another terminal and execute the script `scripts/launch-gdb.sh`. This sets a breakpoint at the label `start_of_setup (arch/x86/boot/header.S)` and continues to run the guest OS. The code will be paused at the starting address of start_of_setup. You can use gdb commands to debug the real-mode setup code of Linux kernel. Enjoy debugging.
+```
 $ ./scripts/launch-gdb.sh
 # debug real-mode code of Linux kernel
 add-symbol-file /home/adrian/git-repo/gdb-linux-real-mode/out/obj/linux/arch/x86/boot/setup.elf 0x103f7 \
@@ -139,3 +138,6 @@ ID <0>  VIP <0> VIF <0> AC <0>  VM <0>  RF <0>  NT <0>  IOPL <0>
 0x0000006c in ?? ()
 real-mode-gdb$
 ```
+## References
+* [How to disassemble 16-bit x86 boot sector code in GDB with “x/i $pc”? It gets treated as 32-bit](https://stackoverflow.com/questions/32955887/how-to-disassemble-16-bit-x86-boot-sector-code-in-gdb-with-x-i-pc-it-gets-tr)
+* [gdbinit_real_mode.txt](https://github.com/mhugo/gdb_init_real_mode/blob/master/gdbinit_real_mode.txt)
