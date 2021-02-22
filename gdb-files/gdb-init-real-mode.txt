@@ -18,8 +18,8 @@ set input-radix 0d10
 set height 0
 set width 0
 
-# Intel syntax
-set disassembly-flavor intel
+# AT&T syntax
+set disassembly-flavor att
 # Real mode
 set architecture i8086
 
