@@ -13,11 +13,17 @@ generate_gdb_cfg() {
 
 	for((i=0;i<${#elf_sections[@]};i++)); do
 		elf_sections_addr[$i]=`readelf -S $SETUP_ELF  | grep -w ${elf_sections[$i]} | awk '{print $5}'`
-		elf_sections_addr[$i]=`printf "0x%x\n" $((16#${elf_sections_addr[$i]} + $SETUP_ELF_BASE))`
+		elf_sections_addr[$i]=`printf "0x%x" $((16#${elf_sections_addr[$i]} + $SETUP_ELF_BASE))`
 	done
 
 	text_section_addr=`readelf -S $SETUP_ELF  | grep -w .text | awk '{print $5}'`
 	text_section_addr=`printf "0x%x" $((16#${text_section_addr} + $SETUP_ELF_BASE))`
+
+	# The kernel setup code (real-mode code) is placed at the second
+	# sector of the kernel setup setup image (setup.bin). So, we need
+	# to add the offset 0x200 to SETUP_ELF_BASE. Please refer to
+	# the kernel documentation "Documentation/x86/boot.rst".
+	setup_code_base_addr=`printf "0x%x" $((${SETUP_ELF_BASE} + 0x200))`
 
 	# This is a quite tricky way to run 'tee' with EOF in a bash function.
         # The file content 'GDB_LINUX_CFG' cannot have the indentation for
@@ -30,7 +36,8 @@ add-symbol-file $SETUP_ELF 0x103f7 \\
 	-s .header ${elf_sections_addr[2]} \\
 	-s .entrytext ${elf_sections_addr[3]}
 target remote :1234
-b start_of_setup
+#b start_of_setup
+b *$setup_code_base_addr
 c
 EOF
 }
