@@ -24,13 +24,14 @@ $ ./scripts/launch-vm.sh
 ```
 $ ./scripts/launch-gdb.sh
 # debug real-mode code of Linux kernel
-add-symbol-file /home/adrian/git-repo/gdb-linux-real-mode/out/obj/linux/arch/x86/boot/setup.elf 0x103f7 \
+add-symbol-file /home/adrian/git-repo/gdb-linux-real-mode/out/obj/linux/arch/x86/boot/setup.elf 0x103ff \
         -s .bstext 0x10000 \
         -s .bsdata 0x1002d \
         -s .header 0x101ef \
         -s .entrytext 0x1026c
 target remote :1234
-b start_of_setup
+#b start_of_setup
+b *0x10200
 c
 GNU gdb (Ubuntu 9.2-0ubuntu1~20.04) 9.2
 Copyright (C) 2020 Free Software Foundation, Inc.
@@ -53,7 +54,7 @@ of GDB.  Attempting to continue with the default i8086 settings.
 
 The target architecture is assumed to be i8086
 add symbol table from file "/home/adrian/git-repo/gdb-linux-real-mode/out/obj/linux/arch/x86/boot/setup.elf" at
-        .text_addr = 0x103f7
+        .text_addr = 0x103ff
         .bstext_addr = 0x10000
         .bsdata_addr = 0x1002d
         .header_addr = 0x101ef
@@ -97,7 +98,7 @@ ID <0>  VIP <0> VIF <0> AC <0>  VM <0>  RF <0>  NT <0>  IOPL <0>
    0x100003:    add    BYTE PTR [eax],al
    0x100005:    add    BYTE PTR [eax],al
 0x0000fff0 in ?? ()
-Breakpoint 1 at 0x1026c: file /home/adrian/git-repo/gdb-linux-real-mode/src/linux-5.11/arch/x86/boot/header.S, line 596.
+Breakpoint 1 at 0x10200
 
 Thread 1 received signal SIGTRAP, Trace/breakpoint trap.
 ---------------------------[ STACK ]---
@@ -118,24 +119,24 @@ AX: 1020 BX: 0000 CX: 0000 DX: 0000
 SI: 0000 DI: 0000 SP: FFF0 BP: 0000
 CS: 1020 DS: 1000 ES: 1000 SS: 1000
 
-IP: 006C EIP:0000006C
-CS:IP: 1020:006C (0x1026C)
+IP: 0000 EIP:00000000
+CS:IP: 1020:0000 (0x10200)
 SS:SP: 1000:FFF0 (0x1FFF0)
 SS:BP: 1000:0000 (0x10000)
 OF <0>  DF <0>  IF <0>  TF <0>  SF <0>  ZF <1>  AF <0>  PF <1>  CF <0>
 ID <0>  VIP <0> VIF <0> AC <0>  VM <0>  RF <0>  NT <0>  IOPL <0>
 ---------------------------[ CODE ]----
-   0x1026c <start_of_setup>:    mov    eax,ds
-   0x1026e <start_of_setup+2>:  mov    es,eax
-   0x10270 <start_of_setup+4>:  cld
-   0x10271 <start_of_setup+5>:  mov    edx,ss
-   0x10273 <start_of_setup+7>:  cmp    edx,eax
-   0x10275 <start_of_setup+9>:  mov    edx,esp
-   0x10277 <start_of_setup+11>: je     0x1028f <start_of_setup+35>
-   0x10279 <start_of_setup+13>: mov    edx,0x6f64a10
-   0x1027e <start_of_setup+18>: adc    DWORD PTR [edx],eax
-   0x10280 <start_of_setup+20>: xor    BYTE PTR [esp+eax*1-0x75],0x16
-0x0000006c in ?? ()
+   0x10200:     jmp    0x1026c <start_of_setup>
+   0x10202:     dec    eax
+   0x10203:     fs jb  0x10259
+   0x10206:     lar    eax,WORD PTR [eax]
+   0x10209:     add    BYTE PTR [eax],al
+   0x1020b:     add    BYTE PTR [eax],al
+   0x1020d:     adc    BYTE PTR [eax+0x33],ah
+   0x10210:     mov    al,0x81
+   0x10212:     add    BYTE PTR [eax+0x100000],al
+   0x10218:     add    BYTE PTR [eax],dl
+0x00000000 in ?? ()
 real-mode-gdb$
 ```
 ## References
