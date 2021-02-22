@@ -30,7 +30,7 @@ generate_gdb_cfg() {
 	# the utility command 'tee file << EOF'
 	tee $GDB_LINUX_CFG << EOF
 # debug real-mode code of Linux kernel
-add-symbol-file $SETUP_ELF 0x103f7 \\
+add-symbol-file $SETUP_ELF $text_section_addr \\
         -s .bstext ${elf_sections_addr[0]} \\
 	-s .bsdata ${elf_sections_addr[1]} \\
 	-s .header ${elf_sections_addr[2]} \\
