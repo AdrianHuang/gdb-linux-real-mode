@@ -8,16 +8,23 @@ SETUP_ELF=$OUT/obj/linux/arch/x86/boot/setup.elf
 SETUP_ELF_BASE=0x10000
 
 generate_gdb_cfg() {
-	elf_sections=(".bstext" ".bsdata" ".header" ".entrytext")
-	elf_sections_addr=(0, 0, 0, 0)
-
-	for((i=0;i<${#elf_sections[@]};i++)); do
-		elf_sections_addr[$i]=`readelf -S $SETUP_ELF  | grep -w ${elf_sections[$i]} | awk '{print $5}'`
-		elf_sections_addr[$i]=`printf "0x%x" $((16#${elf_sections_addr[$i]} + $SETUP_ELF_BASE))`
-	done
+	local elf_sections=(".bstext" ".bsdata" ".header" ".entrytext" ".bss" ".data")
+	local sections_param=""
 
 	text_section_addr=`readelf -S $SETUP_ELF  | grep -w .text | awk '{print $5}'`
 	text_section_addr=`printf "0x%x" $((16#${text_section_addr} + $SETUP_ELF_BASE))`
+	sections_param=$text_section_addr
+
+	for((i=0;i<${#elf_sections[@]};i++)); do
+		section_info=`readelf -S $SETUP_ELF  | grep -w ${elf_sections[$i]}`
+		section_nr=`echo $section_info | awk -F '[][]' '{print $2}'`
+		column=`([ $section_nr -le 9 ] && echo "5" ) || echo "4"`
+
+		str="echo $section_info | awk '{print \$$column}'"
+		section_addr=`eval $str`
+		section_addr=`printf "0x%x" $((16#${section_addr} + $SETUP_ELF_BASE))`
+		sections_param="$sections_param -s ${elf_sections[$i]} ${section_addr}"
+	done
 
 	# The kernel setup code (real-mode code) is placed at the second
 	# sector of the kernel setup setup image (setup.bin). So, we need
@@ -30,11 +37,7 @@ generate_gdb_cfg() {
 	# the utility command 'tee file << EOF'
 	tee $GDB_LINUX_CFG << EOF
 # debug real-mode code of Linux kernel
-add-symbol-file $SETUP_ELF $text_section_addr \\
-        -s .bstext ${elf_sections_addr[0]} \\
-	-s .bsdata ${elf_sections_addr[1]} \\
-	-s .header ${elf_sections_addr[2]} \\
-	-s .entrytext ${elf_sections_addr[3]}
+add-symbol-file $SETUP_ELF $sections_param
 target remote :1234
 #b start_of_setup
 b *$setup_code_base_addr

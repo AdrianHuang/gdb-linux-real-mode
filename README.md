@@ -24,11 +24,7 @@ $ ./scripts/launch-vm.sh
 ```
 $ ./scripts/launch-gdb.sh
 # debug real-mode code of Linux kernel
-add-symbol-file /home/adrian/git-repo/gdb-linux-real-mode/out/obj/linux/arch/x86/boot/setup.elf 0x103ff \
-        -s .bstext 0x10000 \
-        -s .bsdata 0x1002d \
-        -s .header 0x101ef \
-        -s .entrytext 0x1026c
+add-symbol-file /home/adrian/git-repo/gdb-linux-real-mode/out/obj/linux/arch/x86/boot/setup.elf 0x103ff -s .bstext 0x10000 -s .bsdata 0x1002d -s .header 0x101ef -s .entrytext 0x1026c -s .bss 0x136e0 -s .data 0x13660
 target remote :1234
 #b start_of_setup
 b *0x10200
@@ -54,11 +50,13 @@ of GDB.  Attempting to continue with the default i8086 settings.
 
 The target architecture is assumed to be i8086
 add symbol table from file "/home/adrian/git-repo/gdb-linux-real-mode/out/obj/linux/arch/x86/boot/setup.elf" at
-        .text_addr = 0x103ff
-        .bstext_addr = 0x10000
-        .bsdata_addr = 0x1002d
-        .header_addr = 0x101ef
-        .entrytext_addr = 0x1026c
+	.text_addr = 0x103ff
+	.bstext_addr = 0x10000
+	.bsdata_addr = 0x1002d
+	.header_addr = 0x101ef
+	.entrytext_addr = 0x1026c
+	.bss_addr = 0x136e0
+	.data_addr = 0x13660
 
 warning: No executable has been specified and target does not support
 determining executable automatically.  Try using the "file" command.
