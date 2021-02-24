@@ -6,10 +6,14 @@
 #
 # Freely inspired from "A user-friendly gdb configuration file" widely available
 # on the Internet
+#
+# [Feb 23, 2021 Adrian Huang]
+#   Rewrite the script to dynamically support both real mode and protected
+#   mode of Linux kernel. This script is verified with QEMU + linux-5.11
+#   kernel.
 
 set confirm off
 set verbose off
-set prompt \033[31mreal-mode-gdb$ \033[0m
 
 set output-radix 0d10
 set input-radix 0d10
@@ -21,7 +25,7 @@ set width 0
 # AT&T syntax
 set disassembly-flavor att
 # Real mode
-set architecture i8086
+#set architecture i8086
 
 set $SHOW_CONTEXT = 1
 
@@ -71,35 +75,45 @@ Get address of interruption
 end
 
 define compute_regs
-  set $rax = ((unsigned long)$eax & 0xFFFF)
-  set $rbx = ((unsigned long)$ebx & 0xFFFF)
-  set $rcx = ((unsigned long)$ecx & 0xFFFF)
-  set $rdx = ((unsigned long)$edx & 0xFFFF)
-  set $rsi = ((unsigned long)$esi & 0xFFFF)
-  set $rdi = ((unsigned long)$edi & 0xFFFF)
-  set $rbp = ((unsigned long)$ebp & 0xFFFF)
-  set $rsp = ((unsigned long)$esp & 0xFFFF)
-  set $rcs = ((unsigned long)$cs & 0xFFFF)
-  set $rds = ((unsigned long)$ds & 0xFFFF)
-  set $res = ((unsigned long)$es & 0xFFFF)
-  set $rss = ((unsigned long)$ss & 0xFFFF)
-  set $rip = ((((unsigned long)$cs & 0xFFFF) << 4) + ((unsigned long)$eip & 0xFFFF)) & $ADDRESS_MASK
-  set $r_ss_sp = ((((unsigned long)$ss & 0xFFFF) << 4) + ((unsigned long)$esp & 0xFFFF)) & $ADDRESS_MASK
-  set $r_ss_bp = ((((unsigned long)$ss & 0xFFFF) << 4) + ((unsigned long)$ebp & 0xFFFF)) & $ADDRESS_MASK
+  # [real mode] PE (Protected Mode Enable) bit of CR0
+  if ($cr0 & 0x1) == 0
+    set $r_rax = ((unsigned long)$eax & 0xFFFF)
+    set $r_rbx = ((unsigned long)$ebx & 0xFFFF)
+    set $r_rcx = ((unsigned long)$ecx & 0xFFFF)
+    set $r_rdx = ((unsigned long)$edx & 0xFFFF)
+    set $r_rsi = ((unsigned long)$esi & 0xFFFF)
+    set $r_rdi = ((unsigned long)$edi & 0xFFFF)
+    set $r_rbp = ((unsigned long)$ebp & 0xFFFF)
+    set $r_rsp = ((unsigned long)$esp & 0xFFFF)
+    set $r_rcs = ((unsigned long)$cs & 0xFFFF)
+    set $r_rds = ((unsigned long)$ds & 0xFFFF)
+    set $r_res = ((unsigned long)$es & 0xFFFF)
+    set $r_rss = ((unsigned long)$ss & 0xFFFF)
+    set $r_rip = ((((unsigned long)$cs & 0xFFFF) << 4) + ((unsigned long)$rip & 0xFFFF)) & $ADDRESS_MASK
+    set $r_ss_sp = ((((unsigned long)$ss & 0xFFFF) << 4) + ((unsigned long)$esp & 0xFFFF)) & $ADDRESS_MASK
+    set $r_ss_bp = ((((unsigned long)$ss & 0xFFFF) << 4) + ((unsigned long)$ebp & 0xFFFF)) & $ADDRESS_MASK
+  else
+    set $r_rip = $rip
+  end
 end
 
 define print_regs
-  printf "AX: %04X BX: %04X ", $rax, $rbx
-  printf "CX: %04X DX: %04X\n", $rcx, $rdx
-  printf "SI: %04X DI: %04X ", $rsi, $rdi
-  printf "SP: %04X BP: %04X\n", $rsp, $rbp
-  printf "CS: %04X DS: %04X ", $rcs, $rds
-  printf "ES: %04X SS: %04X\n", $res, $rss
-  printf "\n"
-  printf "IP: %04X EIP:%08X\n", ((unsigned short)$eip & 0xFFFF), $eip
-  printf "CS:IP: %04X:%04X (0x%05X)\n", $rcs, ((unsigned short)$eip & 0xFFFF), $rip
-  printf "SS:SP: %04X:%04X (0x%05X)\n", $rss, $rsp, $r_ss_sp
-  printf "SS:BP: %04X:%04X (0x%05X)\n", $rss, $rbp, $r_ss_bp
+  # [real mode] PE (Protected Mode Enable) bit of CR0
+  if ($cr0 & 0x1) == 0
+    printf "AX: %04X BX: %04X ", $r_rax, $r_rbx
+    printf "CX: %04X DX: %04X\n", $r_rcx, $r_rdx
+    printf "SI: %04X DI: %04X ", $r_rsi, $r_rdi
+    printf "SP: %04X BP: %04X\n", $r_rsp, $r_rbp
+    printf "CS: %04X DS: %04X ", $r_rcs, $r_rds
+    printf "ES: %04X SS: %04X\n", $r_res, $r_rss
+    printf "\n"
+    printf "IP: %04X RIP:%08X\n", ((unsigned short)$rip & 0xFFFF), $rip
+    printf "CS:IP: %04X:%04X (0x%05X)\n", $r_rcs, ((unsigned short)$rip & 0xFFFF), $r_rip
+    printf "SS:SP: %04X:%04X (0x%05X)\n", $r_rss, $r_rsp, $r_ss_sp
+    printf "SS:BP: %04X:%04X (0x%05X)\n", $r_rss, $r_rbp, $r_ss_bp
+  else
+    info registers rax rbx rcx rdx rsi rdi rbp rsp rip eflags cs ss ds es fs gs
+  end
 end
 document print_regs
 Print CPU registers
@@ -200,13 +214,20 @@ define context
   set $_a = $r_ss_sp + 16
   _dump_memw $_a 8
   printf "\n"
-  printf "---------------------------[ DS:SI ]---\n"
-  print_data $ds $rsi
-  printf "---------------------------[ ES:DI ]---\n"
-  print_data $es $rdi
+
+  # [real mode] PE (Protected Mode Enable) bit of CR0
+  if ($cr0 & 0x1) == 0
+    printf "---------------------------[ DS:SI ]---\n"
+    print_data $ds $r_rsi
+    printf "---------------------------[ ES:DI ]---\n"
+    print_data $es $r_rdi
+  end
 
   printf "----------------------------[ CPU ]----\n"
   print_regs
+  printf "----------------------------[ CPU Control Register]----\n"
+  info registers cr0
+  printf "----------------------------[ eflags]----\n"
   print_eflags
   printf "---------------------------[ CODE ]----\n"
   
@@ -216,7 +237,7 @@ define context
   # first call x/i with an address
   # subsequent calls to x/i will increment address
   if ($_code_size > 0)
-    x /i $rip
+    x /i $r_rip
     set $_code_size--
   end
   while ($_code_size > 0)
@@ -225,7 +246,7 @@ define context
   end
 end
 document context
-Print context window, i.e. regs, stack, ds:esi and disassemble cs:eip.
+Print context window, i.e. regs, stack, ds:esi and disassemble cs:rip.
 end
 
 define hook-stop
@@ -276,14 +297,14 @@ define stepo
   ## we know that an opcode starting by 0xE8 has a fixed length
   ## for the 0xFF opcodes, we can enumerate what is possible to have
   
-  set $lip = $rip
+  set $lip = $r_rip
   set $offset = 0
   
   # first, get rid of segment prefixes, if any
-  set $_byte1 = *(unsigned char *)$rip
+  set $_byte1 = *(unsigned char *)$r_rip
   # CALL DS:xx CS:xx, etc.
   if ($_byte1 == 0x3E || $_byte1 == 0x26 || $_byte1 == 0x2E || $_byte1 == 0x36 || $_byte1 == 0x3E || $_byte1 == 0x64 || $_byte1 == 0x65)
-    set $lip = $rip + 1
+    set $lip = $r_rip + 1
     set $_byte1 = *(unsigned char*)$lip
     set $offset = 1
   end
@@ -348,7 +369,7 @@ define stepo
   
   # if we have found a call to bypass we set a temporary breakpoint on next instruction and continue 
   if ($noffset != 0)
-    set $_nextaddress = $eip + $offset + $noffset
+    set $_nextaddress = $rip + $offset + $noffset
     printf "Setting BP to %04X\n", $_nextaddress
     tbreak *$_nextaddress
     continue
@@ -367,7 +388,7 @@ define step_until_iret
   set $SHOW_CONTEXT=0
   set $_found = 0
   while (!$_found)
-    if (*(unsigned char*)$rip == 0xCF)
+    if (*(unsigned char*)$r_rip == 0xCF)
       set $_found = 1
     else
       stepo
@@ -381,7 +402,7 @@ define step_until_ret
   set $SHOW_CONTEXT=0
   set $_found = 0
   while (!$_found)
-    set $_p = *(unsigned char*)$rip
+    set $_p = *(unsigned char*)$r_rip
     if ($_p == 0xC3 || $_p == 0xCB || $_p == 0xC2 || $_p == 0xCA)
       set $_found = 1
     else
@@ -395,7 +416,7 @@ end
 define step_until_int
   set $SHOW_CONTEXT = 0
 
-  while (*(unsigned char*)$rip != 0xCD)
+  while (*(unsigned char*)$r_rip != 0xCD)
     stepo
   end
   set $SHOW_CONTEXT = 1
@@ -450,7 +471,7 @@ define step_until_code
     set $_found = 1  
 
     while ($_tofind[$_i] != 0 && $_found == 1)
-      set $_b = *((char*)$rip + $_i)
+      set $_b = *((char*)$r_rip + $_i)
       set $_t = (char)$_tofind[$_i]
       if ($_t != $_b)
 	set $_found = 0

@@ -8,7 +8,7 @@ SETUP_ELF=$OUT/obj/linux/arch/x86/boot/setup.elf
 SETUP_ELF_BASE=0x10000
 
 generate_gdb_cfg() {
-	local elf_sections=(".bstext" ".bsdata" ".header" ".entrytext" ".bss" ".data")
+	local elf_sections=(".bstext" ".bsdata" ".header" ".entrytext" ".inittext" ".initdata" ".text32" ".bss" ".data")
 	local sections_param=""
 
 	text_section_addr=`readelf -S $SETUP_ELF  | grep -w .text | awk '{print $5}'`
