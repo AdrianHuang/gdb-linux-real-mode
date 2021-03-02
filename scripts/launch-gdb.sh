@@ -4,27 +4,44 @@ source `find ./ -name config.sh | head -n1`
 
 GDB_FILES_FOLDER=$ROOT/gdb-files
 GDB_LINUX_CFG=$GDB_FILES_FOLDER/gdb-linux-kernel-real-mode.txt
+
+# Kernel setup code
 SETUP_ELF=$OUT/obj/linux/arch/x86/boot/setup.elf
 SETUP_ELF_BASE=0x10000
+SETUP_ELF_SECTIONS=(".bstext" ".bsdata" ".header" ".entrytext" ".inittext" ".initdata" ".text32" ".bss" ".data")
 
-generate_gdb_cfg() {
-	local elf_sections=(".bstext" ".bsdata" ".header" ".entrytext" ".inittext" ".initdata" ".text32" ".bss" ".data")
+# Compressed vmlinux
+COMPRESSED_VMLINUX_ELF=$OUT/obj/linux/arch/x86/boot/compressed/vmlinux
+COMPRESSED_VMLINUX_ELF_BASE=0x100000
+COMPRESSED_VMLINUX_ELF_SECTIONS=(".head.text" ".data" ".bss" ".pgtable")
+
+parse_elf() {
+	# $1: ELF file path
+	# $2: ELF base address
+	# $3: ELF sections
+	local path=$1
+	local base_addr=$2
+	local -n sections=$3
 	local sections_param=""
 
-	text_section_addr=`readelf -S $SETUP_ELF  | grep -w .text | awk '{print $5}'`
-	text_section_addr=`printf "0x%x" $((16#${text_section_addr} + $SETUP_ELF_BASE))`
+	text_section_addr=`readelf -S $path | grep -w .text | awk '{print $5}'`
+	text_section_addr=`printf "0x%x" $((16#${text_section_addr} + $base_addr))`
 	sections_param=$text_section_addr
 
-	for((i=0;i<${#elf_sections[@]};i++)); do
-		section_info=`readelf -S $SETUP_ELF  | grep -w ${elf_sections[$i]}`
+	for((i=0;i<${#sections[@]};i++)); do
+		section_info=`readelf -S $path | grep -w ${sections[$i]}`
 		section_nr=`echo $section_info | awk -F '[][]' '{print $2}'`
 		column=`([ $section_nr -le 9 ] && echo "5" ) || echo "4"`
 
 		str="echo $section_info | awk '{print \$$column}'"
 		section_addr=`eval $str`
-		section_addr=`printf "0x%x" $((16#${section_addr} + $SETUP_ELF_BASE))`
-		sections_param="$sections_param -s ${elf_sections[$i]} ${section_addr}"
+		section_addr=`printf "0x%x" $((16#${section_addr} + $base_addr))`
+		sections_param="$sections_param -s ${sections[$i]} ${section_addr}"
 	done
+	echo "add-symbol-file $path $sections_param"
+}
+
+generate_gdb_cfg() {
 
 	# The kernel setup code (real-mode code) is placed at the second
 	# sector of the kernel setup setup image (setup.bin). So, we need
@@ -36,10 +53,19 @@ generate_gdb_cfg() {
         # The file content 'GDB_LINUX_CFG' cannot have the indentation for
 	# the utility command 'tee file << EOF'
 	tee $GDB_LINUX_CFG << EOF
-# debug real-mode code of Linux kernel
-add-symbol-file $SETUP_ELF $sections_param
+# debug info about real-mode code of Linux kernel
+$(parse_elf $SETUP_ELF $SETUP_ELF_BASE SETUP_ELF_SECTIONS)
+
+# debug info about compressed vmlinux
+$(parse_elf $COMPRESSED_VMLINUX_ELF $COMPRESSED_VMLINUX_ELF_BASE COMPRESSED_VMLINUX_ELF_SECTIONS)
 target remote :1234
+
+# start_of_setup is the entry point in .entrytext section of setup.elf
 #b start_of_setup
+
+# startup_32 is the entry point in compressed vmlinux
+#b startup_32
+
 b *$setup_code_base_addr
 c
 EOF
