@@ -94,6 +94,7 @@ define compute_regs
     set $r_ss_bp = ((((unsigned long)$ss & 0xFFFF) << 4) + ((unsigned long)$ebp & 0xFFFF)) & $ADDRESS_MASK
   else
     set $r_rip = $rip
+    set $r_ss_sp = $esp
   end
 end
 
@@ -209,11 +210,16 @@ end
 
 define context
   printf "---------------------------[ STACK ]---\n"
-  _dump_memw $r_ss_sp 8
-  printf "\n"
-  set $_a = $r_ss_sp + 16
-  _dump_memw $_a 8
-  printf "\n"
+  # [real mode] PE (Protected Mode Enable) bit of CR0
+  if ($cr0 & 0x1) == 0
+    _dump_memw $r_ss_sp 8
+    printf "\n"
+    set $_a = $r_ss_sp + 16
+    _dump_memw $_a 8
+    printf "\n"
+  else
+    x /16x $r_ss_sp
+  end
 
   # [real mode] PE (Protected Mode Enable) bit of CR0
   if ($cr0 & 0x1) == 0
@@ -226,7 +232,7 @@ define context
   printf "----------------------------[ CPU ]----\n"
   print_regs
   printf "----------------------------[ CPU Control Register]----\n"
-  info registers cr0
+  info registers cr0 cr3 efer
   printf "----------------------------[ eflags]----\n"
   print_eflags
   printf "---------------------------[ CODE ]----\n"
