@@ -175,15 +175,12 @@ end
 # display data at given address
 define print_data
        if ($argc > 0)
-       	  set $seg = $arg0
-	  set $off = $arg1
-	  set $raddr = ($arg0 << 16) + $arg1
 	  set $maddr = ($arg0 << 4) + $arg1
 
 	  set $w = 16
 	  set $i = (int)0
 	  while ($i < 4)
-		printf "%08X: ", ($raddr + $i * $w)
+		printf "%08X: ", ($maddr + $i * $w)
 	  	set $j = (int)0
 		while ($j < $w)
 		      printf "%02X ", *(unsigned char*)($maddr + $i * $w + $j)
@@ -224,9 +221,9 @@ define context
   # [real mode] PE (Protected Mode Enable) bit of CR0
   if ($cr0 & 0x1) == 0
     printf "---------------------------[ DS:SI ]---\n"
-    print_data $ds $r_rsi
+    print_data $r_rds $r_rsi
     printf "---------------------------[ ES:DI ]---\n"
-    print_data $es $r_rdi
+    print_data $r_res $r_rdi
   end
 
   printf "----------------------------[ CPU ]----\n"
