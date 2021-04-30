@@ -12,7 +12,15 @@ SETUP_ELF_SECTIONS=(".bstext" ".bsdata" ".header" ".entrytext" ".inittext" ".ini
 
 # Compressed vmlinux
 COMPRESSED_VMLINUX_ELF=$OUT/obj/linux/arch/x86/boot/compressed/vmlinux
-COMPRESSED_VMLINUX_ELF_BASE=0x100000
+
+# This base address can be retrieved from the efi_main(). In efi_main(),
+# the local variable 'bzimage_addr' is the base address loaded by efi
+# boot loader. The following address '0x1400000' is retrieved with some
+# hacks in efi_main(). For example, print the variable 'bzimage_addr'
+# in efi_main() and you will see the base address in console. You might
+# need to change this address in your environment.
+COMPRESSED_VMLINUX_ELF_BASE=0x1400000
+EFI_ENTRY_POINT=`printf "0x%x" $((${COMPRESSED_VMLINUX_ELF_BASE} + 0x390))`
 COMPRESSED_VMLINUX_ELF_SECTIONS=(".head.text" ".data" ".bss" ".pgtable")
 
 parse_elf() {
@@ -66,7 +74,10 @@ target remote :1234
 # startup_32 is the entry point in compressed vmlinux
 #b startup_32
 
-b *$setup_code_base_addr
+#b *$setup_code_base_addr
+# Since the entry point of efi-based linux (x86_64) is efi64_stub_entry,
+# let's adjust the breapoint accordingly.
+b *$EFI_ENTRY_POINT
 c
 EOF
 }
