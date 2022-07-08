@@ -23,15 +23,10 @@ build_busybox() {
 
 	mkdir -pv $OUT/initramfs/busybox
 	cd $OUT/initramfs/busybox
-	mkdir -pv {bin,dev,sbin,etc,proc,sys/kernel/debug,usr/{bin,sbin},lib,lib64,mnt/root,root}
+	mkdir -pv {bin,dev,sbin,etc,proc,sys/kernel/debug,usr/{bin,sbin},lib,lib64,mnt/root,root,tmp}
 	cp -av $OUT/obj/busybox/_install/* $OUT/initramfs/busybox
-	sudo cp -av /dev/{null,console,tty,sda1} $OUT/initramfs/busybox/dev/
-
-	mkdir -pv $OUT/initramfs/busybox
-	cd $OUT/initramfs/busybox
-	mkdir -pv {bin,dev,sbin,etc,proc,sys/kernel/debug,usr/{bin,sbin},lib,lib64,mnt/root,root}
-	cp -av $OUT/obj/busybox/_install/* $OUT/initramfs/busybox
-	sudo cp -av /dev/{null,console,tty,sda1} $OUT/initramfs/busybox/dev/
+	#cp -av ~/iperf3 $OUT/initramfs/busybox
+	sudo cp -av /dev/{null,console,tty,sda1,random,urandom} $OUT/initramfs/busybox/dev/
 
 	# This is a quite tricky way to run 'tee' with EOF in a bash function.
         # The file content 'OUT/initramfs/busybox/init' cannot have the
@@ -41,6 +36,7 @@ build_busybox() {
 mount -t proc none /proc
 mount -t sysfs none /sys
 mount -t debugfs none /sys/kernel/debug
+mount -t tmpfs tmpfs /tmp
 exec /bin/sh
 EOF
 
