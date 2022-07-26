@@ -15,7 +15,7 @@ ovs-vsctl --no-wait set Open_vSwitch . other_config:dpdk-lcore-mask=0x123
 ovs-vsctl --no-wait set Open_vSwitch . other_config:pmd-cpu-mask=0x123
 ovs-vsctl --no-wait set Open_vSwitch . other_config:dpdk-socket-mem="1024,1024"
 
-sudo dpdk-devbind.py --bind=vfio-pci ens4f0
+dpdk-devbind.py --bind=vfio-pci ens4f0
 
 ovs-vsctl add-br br0 -- set bridge br0 datapath_type=netdev
 ovs-vsctl add-port br0 vhost-user1 -- set Interface vhost-user1 type=dpdkvhostuser
