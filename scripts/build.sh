@@ -25,7 +25,7 @@ build_busybox() {
 	cd $OUT/initramfs/busybox
 	mkdir -pv {bin,dev,sbin,etc,proc,sys/kernel/debug,usr/{bin,sbin},lib,lib64,mnt/root,root,tmp}
 	cp -av $OUT/obj/busybox/_install/* $OUT/initramfs/busybox
-	#cp -av ~/iperf3 $OUT/initramfs/busybox
+	cp -av $ROOT/static-bin/iperf3 $OUT/initramfs/busybox
 	sudo cp -av /dev/{null,console,tty,sda1,random,urandom} $OUT/initramfs/busybox/dev/
 
 	# This is a quite tricky way to run 'tee' with EOF in a bash function.
