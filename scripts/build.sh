@@ -19,6 +19,12 @@ build_busybox() {
 
 	cd $OUT/obj/busybox
 	make -j $(nproc)
+
+	if [ $? != 0 ]; then
+		echo "Failed to compile busybox"
+		exit 1
+	fi
+
 	make install
 
 	mkdir -pv $OUT/initramfs/busybox
