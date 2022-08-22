@@ -15,6 +15,9 @@ COMPRESSED_VMLINUX_ELF=$OUT/obj/linux/arch/x86/boot/compressed/vmlinux
 COMPRESSED_VMLINUX_ELF_BASE=0x100000
 COMPRESSED_VMLINUX_ELF_SECTIONS=(".head.text" ".data" ".bss" ".pgtable")
 
+# Decompressed vmlinux
+DECOMPRESSED_VMLINUX_ELF=$OUT/obj/linux/vmlinux
+
 parse_elf() {
 	# $1: ELF file path
 	# $2: ELF base address
@@ -59,6 +62,11 @@ $(parse_elf $SETUP_ELF $SETUP_ELF_BASE SETUP_ELF_SECTIONS)
 # debug info about compressed vmlinux
 $(parse_elf $COMPRESSED_VMLINUX_ELF $COMPRESSED_VMLINUX_ELF_BASE COMPRESSED_VMLINUX_ELF_SECTIONS)
 target remote :1234
+
+# Uncomment the following line if you want to debug the decompressed vmlinux
+#add-symbol-file $DECOMPRESSED_VMLINUX_ELF
+
+set print pretty on
 
 # start_of_setup is the entry point in .entrytext section of setup.elf
 #b start_of_setup
