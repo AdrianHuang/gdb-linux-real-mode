@@ -32,6 +32,7 @@ build_busybox() {
 	mkdir -pv {bin,dev,sbin,etc,proc,sys/kernel/debug,usr/{bin,sbin},lib,lib64,mnt/root,root}
 	cp -av $OUT/obj/busybox/_install/* $OUT/initramfs/busybox
 	sudo cp -av /dev/{null,console,tty,sda1} $OUT/initramfs/busybox/dev/
+	sudo cp /home/adrian/archive/C/tlpi-for-qemu/tlpi-dist/mmap/t_mmap $OUT/initramfs/busybox
 
 	# This is a quite tricky way to run 'tee' with EOF in a bash function.
         # The file content 'OUT/initramfs/busybox/init' cannot have the
@@ -65,7 +66,7 @@ build_kernel() {
 
 	cp $ROOT/conf/kernel.config $KERNEL_OBJ/.config
 
-	make O=$KERNEL_OBJ -j $(nproc)
+	make O=$KERNEL_OBJ KCFLAGS=-ggdb3 -j $(nproc)
 }
 
 
