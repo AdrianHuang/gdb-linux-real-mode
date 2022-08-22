@@ -11,5 +11,5 @@ ${qemu_bin} -nographic -smp cores=4,sockets=2 -cpu Nehalem -m 16G \
         -numa node,memdev=mem1,cpus=4-7,nodeid=1 \
 	-kernel $KERNEL_OBJ/arch/x86/boot/bzImage \
 	-initrd $INITRAMFS_IGZ \
-	-append "earlyprintk=serial,ttyS0 console=ttyS0 loglevel=8 nokaslr" \
+	-append "earlyprintk=serial,ttyS0 console=ttyS0 loglevel=8 nokaslr norandmaps" \
 	-s -S
