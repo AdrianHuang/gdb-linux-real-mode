@@ -4,9 +4,9 @@ Debug the real-mode setup code and protected mode of Linux Kernel.
 ## Note
 * Environment: Tested on Ubuntu 20.04.1
 
-* Required package
+* Required packages
 ```shell
-$ sudo apt-get install qemu-system-x86
+$ sudo apt-get install make curl gcc bison flex gdb qemu-system-x86
 ```
 
 ## Steps
