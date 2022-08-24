@@ -71,6 +71,7 @@ build_kernel() {
 
 	cp $ROOT/conf/kernel.config $KERNEL_OBJ/.config
 
+	make O=$KERNEL_OBJ olddefconfig
 	make O=$KERNEL_OBJ KCFLAGS=-ggdb3 -j $(nproc)
 }
 
