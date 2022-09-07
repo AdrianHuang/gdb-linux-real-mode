@@ -9,6 +9,8 @@ Debug the real-mode setup code and protected mode of Linux Kernel.
 $ sudo apt-get install make curl gcc bison flex gdb qemu-system-x86
 ```
 
+* [RHEL 8.X]: You need to install package 'glibc-static' when building busybox.
+
 ## Steps
 * Run the script `scripts/build.sh`. This automatically builds Linux kernel (v5.11) and root filesystem (busybox).
 ```shell
