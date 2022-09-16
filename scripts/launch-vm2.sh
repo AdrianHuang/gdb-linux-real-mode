@@ -8,8 +8,8 @@ ${qemu_bin} -nographic -smp cores=8 -cpu host -m 1G \
 	-kernel $KERNEL_OBJ/arch/x86/boot/bzImage \
 	-initrd $INITRAMFS_IGZ \
 	-append "earlyprintk=serial,ttyS0 console=ttyS0 loglevel=8 nokaslr" \
-	-chardev socket,id=char2,path=/usr/local/var/run/openvswitch/vhost-user2 \
-	-netdev type=vhost-user,id=mynet2,chardev=char2,vhostforce \
+	-chardev socket,id=char2,path=/tmp/dpdkvhostclient1,server=on \
+	-netdev type=vhost-user,id=mynet2,chardev=char2,vhostforce=on \
 	-device virtio-net-pci,mac=00:00:00:00:00:02,netdev=mynet2 \
 	-object memory-backend-file,id=mem,size=1G,mem-path=/dev/hugepages,share=on \
 	-numa node,memdev=mem -mem-prealloc \
