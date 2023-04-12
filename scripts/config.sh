@@ -5,6 +5,7 @@ KERNEL_LINK=https://mirrors.edge.kernel.org/pub/linux/kernel/v${KERNEL_VER}.x/li
 ROOT=$PWD
 SRC=$ROOT/src
 OUT=$ROOT/out
+SAMPLE_CODE=$ROOT/sample-code
 
 BUSYBOX_VER=1.32.1
 INITRAMFS_IGZ=$OUT/obj/initramfs.igz

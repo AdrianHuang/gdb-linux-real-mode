@@ -2,6 +2,21 @@
 
 source `find ./ -name config.sh | head -n1`
 
+build_sample_code() {
+	cd $SAMPLE_CODE
+	make
+}
+
+copy_sample_code() {
+	local exec_files=`find ${SAMPLE_CODE} -type f -executable -print`
+
+	mkdir -pv $OUT/initramfs/busybox/sample-code
+
+	for i in $exec_files; do
+		cp $i $OUT/initramfs/busybox/sample-code/
+	done
+}
+
 build_busybox() {
 	cd $SRC
 
@@ -38,6 +53,9 @@ build_busybox() {
 	mkdir -pv {bin,dev,sbin,etc,proc,sys/kernel/debug,usr/{bin,sbin},lib,lib64,mnt/root,root}
 	cp -av $OUT/obj/busybox/_install/* $OUT/initramfs/busybox
 	sudo cp -av /dev/{null,console,tty,sda1} $OUT/initramfs/busybox/dev/
+
+	build_sample_code
+	copy_sample_code
 
 	# This is a quite tricky way to run 'tee' with EOF in a bash function.
         # The file content 'OUT/initramfs/busybox/init' cannot have the
