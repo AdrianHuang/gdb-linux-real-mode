@@ -8,7 +8,7 @@ GDB_LINUX_CFG=$GDB_FILES_FOLDER/gdb-linux-kernel-real-mode.txt
 # Kernel setup code
 SETUP_ELF=$OUT/obj/linux/arch/x86/boot/setup.elf
 SETUP_ELF_BASE=0x10000
-SETUP_ELF_SECTIONS=(".bstext" ".bsdata" ".header" ".entrytext" ".inittext" ".initdata" ".text32" ".bss" ".data")
+SETUP_ELF_SECTIONS=(".bstext" ".header" ".entrytext" ".inittext" ".initdata" ".text32" ".bss" ".data")
 
 # Compressed vmlinux
 COMPRESSED_VMLINUX_ELF=$OUT/obj/linux/arch/x86/boot/compressed/vmlinux
