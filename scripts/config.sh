@@ -9,6 +9,7 @@ SAMPLE_CODE=$ROOT/sample-code
 
 BUSYBOX_VER=1.32.1
 INITRAMFS_IGZ=$OUT/obj/initramfs.igz
+INITRAMFS_OUT=$OUT/initramfs/busybox
 
 KERNEL_FOLDER=$SRC/linux-${KERNEL_VER}.${KERNEL_PATCHLEVEL}
 KERNEL_OBJ=$OUT/obj/linux

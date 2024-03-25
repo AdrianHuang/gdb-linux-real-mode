@@ -1,5 +1,9 @@
 #!/bin/bash
 
+LSPCI_IDS_URL=https://pci-ids.ucw.cz/v2.2/pci.ids
+LSPCI_IDS_PATH=/usr/share/misc
+LSPCI_IDS=pci.ids
+
 source `find ./ -name config.sh | head -n1`
 
 build_sample_code() {
@@ -7,14 +11,26 @@ build_sample_code() {
 	make
 }
 
+get_lspci_ids() {
+	if [ ! -d $INITRAMFS_OUT/$LSPCI_IDS_PATH ]; then
+		mkdir -pv $INITRAMFS_OUT/$LSPCI_IDS_PATH
+	fi
+
+	if [ ! -f $INITRAMFS_OUT/$LSPCI_IDS_PATH/$LSPCI_IDS ]; then
+		wget -P $INITRAMFS_OUT/$LSPCI_IDS_PATH $LSPCI_IDS_URL
+	fi
+}
+
 copy_sample_code() {
 	local exec_files=`find ${SAMPLE_CODE} -type f -executable -print`
 
-	mkdir -pv $OUT/initramfs/busybox/sample-code
+	mkdir -pv $INITRAMFS_OUT/sample-code
 
 	for i in $exec_files; do
-		cp $i $OUT/initramfs/busybox/sample-code/
+		cp $i $INITRAMFS_OUT/sample-code/
 	done
+
+	get_lspci_ids
 }
 
 build_busybox() {
@@ -42,19 +58,19 @@ build_busybox() {
 
 	make install
 
-	mkdir -pv $OUT/initramfs/busybox
-	cd $OUT/initramfs/busybox
+	mkdir -pv $INITRAMFS_OUT
+	cd $INITRAMFS_OUT
 	mkdir -pv {bin,dev,sbin,etc,proc,sys/kernel/debug,usr/{bin,sbin},lib,lib64,mnt/root,root}
-	cp -av $OUT/obj/busybox/_install/* $OUT/initramfs/busybox
-	sudo cp -av /dev/{null,console,tty,sda1} $OUT/initramfs/busybox/dev/
+	cp -av $OUT/obj/busybox/_install/* $INITRAMFS_OUT
+	sudo cp -av /dev/{null,console,tty,sda1} $INITRAMFS_OUT/dev/
 
 	build_sample_code
 	copy_sample_code
 
 	# This is a quite tricky way to run 'tee' with EOF in a bash function.
-        # The file content 'OUT/initramfs/busybox/init' cannot have the
+        # The file content 'INITRAMFS_OUT/init' cannot have the
 	# indentation for the utility command 'tee file << EOF'
-	tee $OUT/initramfs/busybox/init << EOF
+	tee $INITRAMFS_OUT/init << EOF
 #!/bin/sh
 mount -t proc none /proc
 mount -t sysfs none /sys
@@ -62,9 +78,9 @@ mount -t debugfs none /sys/kernel/debug
 exec /bin/sh
 EOF
 
-	chmod +x $OUT/initramfs/busybox/init
+	chmod +x $INITRAMFS_OUT/init
 
-	cd $OUT/initramfs/busybox
+	cd $INITRAMFS_OUT
 	find . | cpio -H newc -o > ../initramfs.cpio
 	cd ..
 	cat initramfs.cpio | gzip > $INITRAMFS_IGZ
