@@ -48,12 +48,6 @@ build_busybox() {
 	cp -av $OUT/obj/busybox/_install/* $OUT/initramfs/busybox
 	sudo cp -av /dev/{null,console,tty,sda1} $OUT/initramfs/busybox/dev/
 
-	mkdir -pv $OUT/initramfs/busybox
-	cd $OUT/initramfs/busybox
-	mkdir -pv {bin,dev,sbin,etc,proc,sys/kernel/debug,usr/{bin,sbin},lib,lib64,mnt/root,root}
-	cp -av $OUT/obj/busybox/_install/* $OUT/initramfs/busybox
-	sudo cp -av /dev/{null,console,tty,sda1} $OUT/initramfs/busybox/dev/
-
 	build_sample_code
 	copy_sample_code
 
