@@ -4,6 +4,8 @@ source `find ./ -name config.sh | head -n1`
 
 GDB_FILES_FOLDER=$ROOT/gdb-files
 GDB_LINUX_CFG=$GDB_FILES_FOLDER/gdb-linux-kernel-real-mode.txt
+GDB_SCRIPT=$KERNEL_FOLDER/scripts/gdb/vmlinux-gdb.py
+HOME_GDB_INIT=~/.gdbinit
 
 # Kernel setup code
 SETUP_ELF=$OUT/obj/linux/arch/x86/boot/setup.elf
@@ -45,7 +47,6 @@ parse_elf() {
 }
 
 generate_gdb_cfg() {
-
 	# The kernel setup code (real-mode code) is placed at the second
 	# sector of the kernel setup setup image (setup.bin). So, we need
 	# to add the offset 0x200 to SETUP_ELF_BASE. Please refer to
@@ -57,14 +58,14 @@ generate_gdb_cfg() {
 	# the utility command 'tee file << EOF'
 	tee $GDB_LINUX_CFG << EOF
 # debug info about real-mode code of Linux kernel
-$(parse_elf $SETUP_ELF $SETUP_ELF_BASE SETUP_ELF_SECTIONS)
+#$(parse_elf $SETUP_ELF $SETUP_ELF_BASE SETUP_ELF_SECTIONS)
 
 # debug info about compressed vmlinux
 $(parse_elf $COMPRESSED_VMLINUX_ELF $COMPRESSED_VMLINUX_ELF_BASE COMPRESSED_VMLINUX_ELF_SECTIONS)
 target remote :1234
 
 # Uncomment the following line if you want to debug the decompressed vmlinux
-#add-symbol-file $DECOMPRESSED_VMLINUX_ELF
+add-symbol-file $DECOMPRESSED_VMLINUX_ELF
 
 set print pretty on
 
@@ -74,14 +75,30 @@ set print pretty on
 # startup_32 is the entry point in compressed vmlinux
 #b startup_32
 
-b *$setup_code_base_addr
+#b *$setup_code_base_addr
+
+b pci_write_msg_msix
+
 c
 EOF
+}
+
+check_gdb_script() {
+	if [ ! -f $HOME_GDB_INIT ]; then
+		echo "add-auto-load-safe-path $GDB_SCRIPT" > $HOME_GDB_INIT
+	else
+		line_exist=$(grep $GDB_SCRIPT $HOME_GDB_INIT)
+		if [ -z "$line_exist" ]; then
+			echo "add-auto-load-safe-path $GDB_SCRIPT" >> $HOME_GDB_INIT
+		fi
+	fi
 }
 
 if [ ! -f $GDB_LINUX_CFG ]; then
 	generate_gdb_cfg
 fi
+
+check_gdb_script
 
 cd $GDB_FILES_FOLDER
 gdb -ix $GDB_FILES_FOLDER/gdb-init-real-mode.txt -ix $GDB_LINUX_CFG
