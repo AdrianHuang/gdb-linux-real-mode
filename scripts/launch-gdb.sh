@@ -1,6 +1,9 @@
 #!/bin/bash
 
-source `find ./ -name config.sh | head -n1`
+SCRIPT_FILDER=$(dirname $(readlink -f "$0"))
+ROOT=$(dirname $SCRIPT_FILDER)
+
+source `find $SCRIPT_FILDER -name config.sh | head -n1`
 
 GDB_FILES_FOLDER=$ROOT/gdb-files
 GDB_LINUX_CFG=$GDB_FILES_FOLDER/gdb-linux-kernel-real-mode.txt

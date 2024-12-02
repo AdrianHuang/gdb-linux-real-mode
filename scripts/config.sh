@@ -1,8 +1,7 @@
 KERNEL_VER=6
-KERNEL_PATCHLEVEL=11
+KERNEL_PATCHLEVEL=12
 KERNEL_LINK=https://mirrors.edge.kernel.org/pub/linux/kernel/v${KERNEL_VER}.x/linux-${KERNEL_VER}.${KERNEL_PATCHLEVEL}.tar.xz
 
-ROOT=$PWD
 SRC=$ROOT/src
 OUT=$ROOT/out
 SAMPLE_CODE=$ROOT/sample-code
